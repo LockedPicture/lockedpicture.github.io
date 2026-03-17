@@ -314,7 +314,7 @@
   .reel-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5px;
+    gap: 1.25rem;
   }
 
   .reel-panel { display: none; }
@@ -420,47 +420,207 @@
   .shows-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    gap: 1rem;
   }
 
   .show-card {
     position: relative;
     aspect-ratio: 16/9;
     overflow: hidden;
-    display: block;
-    text-decoration: none;
+    cursor: pointer;
+    background: var(--bg3);
   }
 
   .show-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.7;
-    transition: opacity 0.35s, transform 0.5s;
+    opacity: 0.65;
+    transition: opacity 0.4s, transform 0.6s;
     display: block;
   }
 
   .show-card:hover img {
     opacity: 1;
-    transform: scale(1.04);
+    transform: scale(1.05);
   }
 
-  .show-card-label {
+  /* Overlay — slides up on hover */
+  .show-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(8,8,8,0.92) 0%, rgba(8,8,8,0.3) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+
+  .show-card:hover .show-card-overlay { opacity: 1; }
+
+  .show-card-name {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    transform: translateY(6px);
+    transition: transform 0.35s;
+  }
+
+  .show-card:hover .show-card-name { transform: translateY(0); }
+
+  .show-card-btn {
+    display: inline-block;
+    padding: 0.45rem 1rem;
+    background: var(--gold);
+    color: #080808;
+    font-family: var(--sans);
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    align-self: flex-start;
+    transform: translateY(8px);
+    transition: transform 0.35s 0.04s, background 0.25s;
+  }
+
+  .show-card:hover .show-card-btn { transform: translateY(0); }
+  .show-card-btn:hover { background: var(--gold-light); }
+
+  /* Show clips lightbox panel */
+  .show-clips-lb {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0,0,0,0.94);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+    animation: lbFadeIn 0.3s ease;
+  }
+
+  .show-clips-lb.active { display: flex; }
+
+  .show-clips-header {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .show-clips-title {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 300;
+    color: var(--text);
+  }
+
+  .show-clips-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+  }
+
+  .show-clips-close:hover { color: var(--gold); }
+  .show-clips-close::before { content: '✕'; font-size: 0.85rem; }
+
+  .show-clips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 1000px;
+    overflow-y: auto;
+    max-height: 70vh;
+  }
+
+  .show-clip-card {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: var(--bg3);
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: border-color 0.25s;
+  }
+
+  .show-clip-card:hover { border-color: rgba(201,165,90,0.3); }
+
+  .show-clip-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+
+  .show-clip-card:hover img { opacity: 1; }
+
+  .show-clip-info {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    padding: 1.5rem 0.75rem 0.6rem;
+    padding: 2rem 0.9rem 0.8rem;
     background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
-    font-size: 0.62rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: rgba(237,233,220,0.75);
-    transform: translateY(4px);
-    transition: transform 0.3s;
   }
 
-  .show-card:hover .show-card-label {
-    transform: translateY(0);
-    color: var(--gold-light);
+  .show-clip-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.15rem;
+  }
+
+  .show-clip-title {
+    font-family: var(--serif);
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .show-play-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 42px; height: 42px;
+    border: 1px solid rgba(201,165,90,0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+
+  .show-clip-card:hover .show-play-icon {
+    border-color: var(--gold);
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  .show-play-icon::after {
+    content: '';
+    width: 0; height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 10px solid rgba(201,165,90,0.7);
+    margin-left: 3px;
+  }
+
+  .show-clip-card:hover .show-play-icon::after {
+    border-left-color: var(--gold-light);
   }
 
   /* CREDITS */
@@ -526,7 +686,7 @@
   }
 
   .credit-role {
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     letter-spacing: 0.05em;
   }
@@ -539,17 +699,17 @@
 
   .credit-year {
     display: block;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     letter-spacing: 0.1em;
   }
 
   .credit-eps {
     display: block;
-    font-size: 0.68rem;
+    font-size: 0.78rem;
     color: var(--gold);
     letter-spacing: 0.06em;
-    margin-top: 0.15rem;
+    margin-top: 0.05rem;
   }
 
   /* RESUME */
@@ -650,23 +810,21 @@
   }
 
   .contact-sub {
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     color: var(--text-muted);
     margin-bottom: 3rem;
   }
 
   .contact-links {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.25rem;
+    justify-content: center;
+    gap: 4rem;
+    flex-wrap: wrap;
   }
 
   .contact-item {
     display: flex;
-    align-items: baseline;
-    gap: 1rem;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
   }
 
@@ -903,6 +1061,7 @@
   <a href="#" class="nav-logo">SL</a>
   <ul class="nav-links">
     <li><a href="#reels">Reels</a></li>
+    <li><a href="#shows">Shows</a></li>
     <li><a href="#credits">Credits</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
@@ -971,20 +1130,20 @@
   <!-- Drama -->
   <div class="reel-panel active" id="panel-drama">
     <div class="reel-grid">
-      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Drama">
+      <div class="reel-item" data-yt="d2oXDsWtDrY" data-title="Guilt — Freeform">
         <div class="reel-placeholder"><div class="play-icon"></div></div>
         <div class="reel-info">
           <div class="reel-genre">Drama</div>
-          <div class="reel-title">Clip Title</div>
-          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+          <div class="reel-title">Guilt</div>
+          <div class="reel-meta">Freeform / Lionsgate</div>
         </div>
       </div>
-      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Drama">
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Perception — TNT">
         <div class="reel-placeholder"><div class="play-icon"></div></div>
         <div class="reel-info">
           <div class="reel-genre">Drama</div>
-          <div class="reel-title">Clip Title</div>
-          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+          <div class="reel-title">Perception</div>
+          <div class="reel-meta">TNT / ABC</div>
         </div>
       </div>
       <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Drama">
@@ -1075,6 +1234,123 @@
 
 <div class="divider"></div>
 
+<!-- SHOWS -->
+<section id="shows">
+  <div class="section-label">Browse by Show</div>
+  <h2 class="section-heading">Shows</h2>
+  <p class="section-sub" style="margin-bottom:2.5rem;">Hover over a show and click View Clips to see editorial work from that series.</p>
+  <div class="shows-grid">
+
+    <div class="show-card" onclick="openShowClips('macgyver')">
+      <img src="images/macgyver.jpg" alt="MacGyver">
+      <div class="show-card-overlay">
+        <div class="show-card-name">MacGyver</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('equalizer')">
+      <img src="images/equalizer.jpg" alt="The Equalizer">
+      <div class="show-card-overlay">
+        <div class="show-card-name">The Equalizer</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('nikita')">
+      <img src="images/nikita.jpg" alt="Nikita">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Nikita</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('poi')">
+      <img src="images/poi.jpg" alt="Person of Interest">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Person of Interest</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('coldcase')">
+      <img src="images/cold_case.jpg" alt="Cold Case">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Cold Case</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('ering')">
+      <img src="images/ering.jpg" alt="E-Ring">
+      <div class="show-card-overlay">
+        <div class="show-card-name">E-Ring</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('csi')">
+      <img src="images/csi_miami.jpg" alt="CSI: Miami">
+      <div class="show-card-overlay">
+        <div class="show-card-name">CSI: Miami</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('chase')">
+      <img src="images/chase.jpg" alt="Chase">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Chase</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('notorious')">
+      <img src="images/notorious.jpg" alt="Notorious">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Notorious</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('perception')">
+      <img src="images/perception.jpg" alt="Perception">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Perception</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('legends')">
+      <img src="images/legends.jpg" alt="Legends">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Legends</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+    <div class="show-card" onclick="openShowClips('guilt')">
+      <img src="images/guilt.jpg" alt="Guilt">
+      <div class="show-card-overlay">
+        <div class="show-card-name">Guilt</div>
+        <div class="show-card-btn">View Clips</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SHOW CLIPS LIGHTBOX -->
+<div class="show-clips-lb" id="showClipsLb">
+  <div class="show-clips-header">
+    <div class="show-clips-title" id="showClipsTitle"></div>
+    <button class="show-clips-close" id="showClipsClose">Close</button>
+  </div>
+  <div class="show-clips-grid" id="showClipsGrid"></div>
+</div>
+
+<div class="divider"></div>
+
 <!-- CREDITS -->
 <section id="credits">
   <div class="section-label">Filmography</div>
@@ -1088,12 +1364,12 @@
       <div>
         <div class="credit-item">
           <div>
-            <div class="credit-title">Guilt</div>
-            <div class="credit-role">Freeform / Lionsgate</div>
+            <div class="credit-title">Perception</div>
+            <div class="credit-role">TNT / ABC</div>
           </div>
           <div class="credit-meta">
-            <span class="credit-year">S1</span>
-            <span class="credit-eps">2 episodes</span>
+            <span class="credit-year">S3</span>
+            <span class="credit-eps">9 episodes</span>
           </div>
         </div>
         <div class="credit-item">
@@ -1108,12 +1384,12 @@
         </div>
         <div class="credit-item">
           <div>
-            <div class="credit-title">Perception</div>
-            <div class="credit-role">TNT / ABC</div>
+            <div class="credit-title">Guilt</div>
+            <div class="credit-role">Freeform / Lionsgate</div>
           </div>
           <div class="credit-meta">
-            <span class="credit-year">S3</span>
-            <span class="credit-eps">9 episodes</span>
+            <span class="credit-year">S1</span>
+            <span class="credit-eps">2 episodes</span>
           </div>
         </div>
       </div>
@@ -1127,64 +1403,12 @@
     <div>
       <div class="credit-item">
         <div>
-          <div class="credit-title">The Equalizer</div>
-          <div class="credit-role">CBS / Universal</div>
-        </div>
-        <div class="credit-meta">
-          <span class="credit-year">S3–5</span>
-          <span class="credit-eps">15 episodes</span>
-        </div>
-      </div>
-      <div class="credit-item">
-        <div>
           <div class="credit-title">MacGyver</div>
           <div class="credit-role">CBS / Lionsgate</div>
         </div>
         <div class="credit-meta">
           <span class="credit-year">S1–5</span>
           <span class="credit-eps">31 episodes</span>
-        </div>
-      </div>
-      <div class="credit-item">
-        <div>
-          <div class="credit-title">Notorious</div>
-          <div class="credit-role">ABC / Sony</div>
-        </div>
-        <div class="credit-meta">
-          <span class="credit-year">S1</span>
-          <span class="credit-eps">3 episodes</span>
-        </div>
-      </div>
-      <div class="credit-item">
-        <div>
-          <div class="credit-title">Nikita</div>
-          <div class="credit-role">CW / WB</div>
-        </div>
-        <div class="credit-meta">
-          <span class="credit-year">S3–4</span>
-          <span class="credit-eps">11 episodes</span>
-        </div>
-      </div>
-      <div class="credit-item">
-        <div>
-          <div class="credit-title">Person of Interest</div>
-          <div class="credit-role">CBS / WB / Bad Robot</div>
-        </div>
-        <div class="credit-meta">
-          <span class="credit-year">S1</span>
-          <span class="credit-eps">7 episodes</span>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="credit-item">
-        <div>
-          <div class="credit-title">Chase</div>
-          <div class="credit-role">NBC / WB / Bruckheimer</div>
-        </div>
-        <div class="credit-meta">
-          <span class="credit-year">S1</span>
-          <span class="credit-eps">5 episodes</span>
         </div>
       </div>
       <div class="credit-item">
@@ -1199,12 +1423,44 @@
       </div>
       <div class="credit-item">
         <div>
+          <div class="credit-title">The Equalizer</div>
+          <div class="credit-role">CBS / Universal</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S3–5</span>
+          <span class="credit-eps">15 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Nikita</div>
+          <div class="credit-role">CW / WB</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S3–4</span>
+          <span class="credit-eps">11 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
           <div class="credit-title">E-Ring</div>
           <div class="credit-role">NBC / WB / Bruckheimer</div>
         </div>
         <div class="credit-meta">
           <span class="credit-year">S1</span>
           <span class="credit-eps">8 episodes</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Person of Interest</div>
+          <div class="credit-role">CBS / WB / Bad Robot</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">7 episodes</span>
         </div>
       </div>
       <div class="credit-item">
@@ -1215,6 +1471,26 @@
         <div class="credit-meta">
           <span class="credit-year">S2</span>
           <span class="credit-eps">6 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Chase</div>
+          <div class="credit-role">NBC / WB / Bruckheimer</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">5 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Notorious</div>
+          <div class="credit-role">ABC / Sony</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">3 episodes</span>
         </div>
       </div>
     </div>
@@ -1231,12 +1507,16 @@
   <p class="contact-sub">Los Angeles based — available to travel.</p>
   <div class="contact-links">
     <div class="contact-item">
-      <span class="contact-item-label">Agent / Ivana Slavic</span>
-      <a href="tel:3237821854" class="contact-link">323.782.1854</a>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;">
+        <span class="contact-item-label">Agent / Ivana Slavic</span>
+        <a href="tel:3237821854" class="contact-link">323.782.1854</a>
+      </div>
     </div>
     <div class="contact-item">
-      <span class="contact-item-label">Email</span>
-      <a href="mailto:contact@gsktalent.com" class="contact-link">contact@gsktalent.com</a>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;">
+        <span class="contact-item-label">Email</span>
+        <a href="mailto:contact@gsktalent.com" class="contact-link">contact@gsktalent.com</a>
+      </div>
     </div>
   </div>
 </section>
@@ -1258,6 +1538,52 @@
 </footer>
 
 <script>
+  // SHOW CLIPS DATA — add YouTube IDs here per show
+  const showData = {
+    macgyver:    { name: 'MacGyver',            clips: [{ yt: 'OJtn9wzfMqk', label: 'Action', title: 'Clip Title' }] },
+    equalizer:   { name: 'The Equalizer',       clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    nikita:      { name: 'Nikita',              clips: [{ yt: 'OJtn9wzfMqk', label: 'Action', title: 'Clip Title' }] },
+    poi:         { name: 'Person of Interest',  clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    coldcase:    { name: 'Cold Case',           clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    ering:       { name: 'E-Ring',              clips: [{ yt: 'OJtn9wzfMqk', label: 'Action', title: 'Clip Title' }] },
+    csi:         { name: 'CSI: Miami',          clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    chase:       { name: 'Chase',               clips: [{ yt: 'OJtn9wzfMqk', label: 'Action', title: 'Clip Title' }] },
+    notorious:   { name: 'Notorious',           clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    perception:  { name: 'Perception',          clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    legends:     { name: 'Legends',             clips: [{ yt: 'OJtn9wzfMqk', label: 'Drama', title: 'Clip Title' }] },
+    guilt:       { name: 'Guilt',               clips: [{ yt: 'd2oXDsWtDrY', label: 'Drama', title: 'Clip Title' }] },
+  };
+
+  function openShowClips(showKey) {
+    const show = showData[showKey];
+    if (!show) return;
+    document.getElementById('showClipsTitle').textContent = show.name;
+    const grid = document.getElementById('showClipsGrid');
+    grid.innerHTML = show.clips.map(c => `
+      <div class="show-clip-card" onclick="openLightbox('${c.yt}','${c.title} — ${show.name}')">
+        <img src="https://img.youtube.com/vi/${c.yt}/maxresdefault.jpg" alt="${c.title}">
+        <div class="show-play-icon"></div>
+        <div class="show-clip-info">
+          <div class="show-clip-label">${c.label}</div>
+          <div class="show-clip-title">${c.title}</div>
+        </div>
+      </div>`).join('');
+    document.getElementById('showClipsLb').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  document.getElementById('showClipsClose').addEventListener('click', () => {
+    document.getElementById('showClipsLb').classList.remove('active');
+    document.body.style.overflow = '';
+  });
+
+  document.getElementById('showClipsLb').addEventListener('click', e => {
+    if (e.target === document.getElementById('showClipsLb')) {
+      document.getElementById('showClipsLb').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+
   // Video autoplay
   const heroVideo = document.getElementById('heroVideo');
   if (heroVideo) { heroVideo.play().catch(() => {}); }
