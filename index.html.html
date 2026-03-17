@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scott Lerner — Picture Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c9a55a;
+    --gold-light: #e8c97a;
+    --bg: #080808;
+    --bg2: #111111;
+    --bg3: #181818;
+    --text: #e8e4dc;
+    --text-muted: #8a8580;
+    --border: rgba(201,165,90,0.15);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'Outfit', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 4rem;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.95) 0%, transparent 100%);
+    backdrop-filter: blur(2px);
+  }
+
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .nav-links a:hover { color: var(--gold); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 4rem 6rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .hero-video-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(8,8,8,0.3) 0%, rgba(8,8,8,0) 40%, rgba(8,8,8,0.85) 80%, rgba(8,8,8,1) 100%);
+    z-index: 3;
+  }
+
+  .hero-video::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,165,90,0.03) 60px, rgba(201,165,90,0.03) 61px),
+      repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(201,165,90,0.02) 80px, rgba(201,165,90,0.02) 81px),
+      #060810;
+    z-index: 1;
+  }
+
+  .hero-video::after {
+    content: '';
+    position: absolute;
+    inset: -100%;
+    background: conic-gradient(
+      from 0deg at 60% 40%,
+      transparent 0deg,
+      rgba(201,165,90,0.06) 20deg,
+      transparent 40deg,
+      transparent 180deg,
+      rgba(100,120,180,0.04) 200deg,
+      transparent 220deg
+    );
+    animation: sweep 12s linear infinite;
+    z-index: 2;
+  }
+
+  @keyframes sweep {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .bokeh {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    animation: drift linear infinite;
+    z-index: 2;
+  }
+
+  .bokeh-1 { width:300px; height:300px; background:rgba(201,165,90,0.07); top:10%; left:60%; animation-duration:18s; }
+  .bokeh-2 { width:200px; height:200px; background:rgba(80,100,180,0.06); top:50%; left:20%; animation-duration:22s; animation-delay:-6s; }
+  .bokeh-3 { width:400px; height:400px; background:rgba(150,80,80,0.05); top:-10%; left:40%; animation-duration:26s; animation-delay:-10s; }
+  .bokeh-4 { width:180px; height:180px; background:rgba(201,165,90,0.05); top:70%; left:75%; animation-duration:20s; animation-delay:-4s; }
+  .bokeh-5 { width:250px; height:250px; background:rgba(60,120,150,0.06); top:30%; left:5%; animation-duration:24s; animation-delay:-14s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    33%  { transform: translate(40px, -30px) scale(1.1); }
+    66%  { transform: translate(-20px, 20px) scale(0.95); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201,165,90,0.15) 30%, rgba(201,165,90,0.15) 70%, transparent);
+    animation: scan 8s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes scan {
+    0%   { top: 15%; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { top: 85%; opacity: 0; }
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    z-index: 1;
+  }
+
+  .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+  .hero-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-name {
+    font-family: 'Syncopate', sans-serif;
+    line-height: 1.0;
+    margin-bottom: 1.4rem;
+  }
+
+  .hero-name .first {
+    display: block;
+    font-size: clamp(0.7rem, 1.4vw, 1rem);
+    font-weight: 400;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-name .last {
+    display: block;
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text);
+    line-height: 1.05;
+  }
+
+  .hero-name em {
+    font-style: normal;
+    color: var(--gold-light);
+  }
+
+  .hero-title {
+    font-size: 0.78rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-desc {
+    max-width: 560px;
+    font-size: 1.15rem;
+    color: var(--text);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    font-weight: 300;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 0.85rem 2.2rem;
+    background: var(--gold);
+    color: #080808;
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.3s, transform 0.2s;
+  }
+
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  .btn-ghost {
+    display: inline-block;
+    padding: 0.85rem 2.2rem;
+    border: 1px solid rgba(201,165,90,0.4);
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: border-color 0.3s, color 0.3s;
+  }
+
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold-light); }
+
+  /* SECTION SHARED */
+  section {
+    padding: 7rem 4rem;
+    position: relative;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 0 0 30px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .section-heading {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 300;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+
+  .section-sub {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    max-width: 520px;
+    margin-bottom: 4rem;
+    line-height: 1.8;
+  }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 0 4rem;
+  }
+
+  /* REEL SECTION */
+  #reels { background: var(--bg2); }
+
+  .reel-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .reel-tab {
+    padding: 0.75rem 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.3s, border-color 0.3s;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+
+  .reel-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .reel-tab:hover:not(.active) { color: var(--text); }
+
+  .reel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5px;
+  }
+
+  .reel-panel { display: none; }
+  .reel-panel.active { display: block; }
+
+  .reel-item {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: var(--bg3);
+    overflow: hidden;
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
+  }
+
+  .reel-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+    transition: opacity 0.4s, transform 0.6s;
+  }
+
+  .reel-item:hover .reel-thumb { opacity: 1; transform: scale(1.03); }
+
+  .reel-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #141414 0%, #1e1a14 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s;
+  }
+
+  .reel-item:hover .reel-placeholder { opacity: 0.7; }
+
+  .play-icon {
+    width: 52px;
+    height: 52px;
+    border: 1.5px solid rgba(201,165,90,0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+
+  .reel-item:hover .play-icon {
+    border-color: var(--gold);
+    transform: scale(1.1);
+  }
+
+  .play-icon::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 14px solid var(--gold);
+    margin-left: 3px;
+  }
+
+  .reel-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2rem 1.25rem 1.25rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+    transform: translateY(4px);
+    transition: transform 0.3s;
+  }
+
+  .reel-item:hover .reel-info { transform: translateY(0); }
+
+  .reel-genre {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.25rem;
+  }
+
+  .reel-title {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .reel-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  /* SHOWS GRID */
+  #shows { background: var(--bg2); padding: 5rem 4rem; }
+
+  .shows-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .show-card {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+  }
+
+  .show-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+    transition: opacity 0.35s, transform 0.5s;
+    display: block;
+  }
+
+  .show-card:hover img {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+
+  .show-card-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 1.5rem 0.75rem 0.6rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(237,233,220,0.75);
+    transform: translateY(4px);
+    transition: transform 0.3s;
+  }
+
+  .show-card:hover .show-card-label {
+    transform: translateY(0);
+    color: var(--gold-light);
+  }
+
+  /* CREDITS */
+  #credits { background: var(--bg); }
+
+  .credits-cable {
+    margin-bottom: 3.5rem;
+  }
+
+  .credits-network {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8rem;
+  }
+
+  .credits-network-header {
+    grid-column: 1 / -1;
+    font-size: 0.95rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .credit-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.25rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    align-items: start;
+  }
+
+  .credit-item:last-child { border-bottom: none; }
+
+  .credits-col-label {
+    font-size: 0.95rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  /* Cable matches network grid so left column aligns */
+  .credits-cable-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8rem;
+  }
+
+  .credit-title {
+    font-family: var(--sans);
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 0.15rem;
+  }
+
+  .credit-role {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .credit-meta {
+    text-align: right;
+    white-space: nowrap;
+    padding-top: 0.2rem;
+  }
+
+  .credit-year {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .credit-eps {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    margin-top: 0.15rem;
+  }
+
+  /* RESUME */
+  #resume { background: var(--bg2); }
+
+  .resume-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 2rem;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: border-color 0.3s, color 0.3s;
+    margin-bottom: 4rem;
+  }
+
+  .resume-download:hover { border-color: var(--gold); color: var(--gold); }
+
+  .resume-download::before {
+    content: '↓';
+    font-size: 1rem;
+    color: var(--gold);
+  }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+
+  .skill-block { }
+
+  .skill-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+
+  .skill-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .skill-list li {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .skill-list li::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  /* CONTACT */
+  #contact { background: var(--bg); text-align: center; }
+
+  #contact .section-label { justify-content: center; }
+  #contact .section-label::after { display: none; }
+  #contact .section-label::before {
+    content: '';
+    flex: 0 0 30px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  #contact .section-heading {
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .contact-tagline {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 3rem;
+  }
+
+  .contact-tagline em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .contact-sub {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .contact-item-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .contact-link {
+    font-size: 1.05rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.3s, border-color 0.3s;
+  }
+
+  .contact-link:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+
+  footer p {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-eyebrow { animation: fadeUp 0.8s ease forwards; }
+  .hero-name { animation: fadeUp 0.8s 0.15s ease both; }
+  .hero-title { animation: fadeUp 0.8s 0.25s ease both; }
+  .hero-desc { animation: fadeUp 0.8s 0.35s ease both; }
+  .hero-cta { animation: fadeUp 0.8s 0.45s ease both; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 1.25rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { padding: 0 1.5rem 4rem; }
+    section { padding: 5rem 1.5rem; }
+    .shows-grid { grid-template-columns: repeat(2, 1fr); }
+    .divider { margin: 0 1.5rem; }
+    .credits-network { grid-template-columns: 1fr; gap: 2rem; }
+    .credits-cable-grid { grid-template-columns: 1fr; }
+    .skills-grid { grid-template-columns: 1fr 1fr; }
+    footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; text-align: center; }
+    .genre-strip { padding: 1.5rem; }
+    .genre-list { gap: 1rem; }
+  }
+
+  /* GENRE STRIP */
+  .genre-strip {
+    padding: 2.5rem 4rem;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .genre-strip-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .genre-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.8rem;
+    align-items: center;
+  }
+
+  .genre-tag {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .genre-tag::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  /* SCROLLING GENRES */
+  .genre-marquee {
+    overflow: hidden;
+    margin-bottom: 1.75rem;
+    mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
+
+  .genre-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: genre-scroll 18s linear infinite;
+  }
+
+  .genre-marquee-track:hover { animation-play-state: paused; }
+
+  .genre-marquee-track span {
+    font-size: 0.78rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+    padding: 0 1.5rem;
+  }
+
+  .genre-marquee-track span.sep {
+    color: var(--gold);
+    opacity: 0.5;
+    padding: 0;
+    letter-spacing: 0;
+  }
+
+  @keyframes genre-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* LIGHTBOX */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0,0,0,0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .lightbox.active {
+    display: flex;
+    animation: lbFadeIn 0.3s ease;
+  }
+
+  @keyframes lbFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .lightbox-inner {
+    position: relative;
+    width: 90vw;
+    max-width: 1000px;
+    aspect-ratio: 16/9;
+  }
+
+  .lightbox-inner iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .lightbox-title {
+    margin-top: 1.25rem;
+    font-family: var(--serif);
+    font-size: 1rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: -2.5rem;
+    right: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    transition: color 0.2s;
+  }
+
+  .lightbox-close:hover { color: var(--gold); }
+
+  .lightbox-close::before {
+    content: '✕';
+    font-size: 0.85rem;
+  }
+
+  .lightbox-yt {
+    margin-top: 0.75rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(201,165,90,0.45);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .lightbox-yt:hover { color: var(--gold); }
+
+  /* Reel cards — cursor pointer, show play on hover */
+  .reel-item { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">SL</a>
+  <ul class="nav-links">
+    <li><a href="#reels">Reels</a></li>
+    <li><a href="#credits">Credits</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-video">
+    <video id="heroVideo" muted loop playsinline
+      style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;pointer-events:none;opacity:0.45;">
+      <source src="hero.mp4" type="video/mp4">
+    </video>
+    <div class="bokeh bokeh-1"></div>
+    <div class="bokeh bokeh-2"></div>
+    <div class="bokeh bokeh-3"></div>
+    <div class="bokeh bokeh-4"></div>
+    <div class="bokeh bokeh-5"></div>
+    <div class="scan-line"></div>
+    <div class="hero-video-overlay"></div>
+  </div>
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="genre-marquee">
+      <div class="genre-marquee-track">
+        <span>Action</span><span class="sep">·</span>
+        <span>Drama</span><span class="sep">·</span>
+        <span>Comedy</span><span class="sep">·</span>
+        <span>Thriller</span><span class="sep">·</span>
+        <span>Murder</span><span class="sep">·</span>
+        <span>Mystery</span><span class="sep">·</span>
+        <span>Procedural</span><span class="sep">·</span>
+        <span>Emotion</span><span class="sep">·</span>
+        <span>Suspense</span><span class="sep">·</span>
+        <span>Action</span><span class="sep">·</span>
+        <span>Drama</span><span class="sep">·</span>
+        <span>Comedy</span><span class="sep">·</span>
+        <span>Thriller</span><span class="sep">·</span>
+        <span>Murder</span><span class="sep">·</span>
+        <span>Mystery</span><span class="sep">·</span>
+        <span>Procedural</span><span class="sep">·</span>
+        <span>Emotion</span><span class="sep">·</span>
+        <span>Suspense</span><span class="sep">·</span>
+      </div>
+    </div>
+    <div class="hero-eyebrow">Picture Editor</div>
+    <h1 class="hero-name"><span class="first">Scott</span><span class="last">Lerner</span></h1>
+    <p class="hero-title">Series &nbsp;·&nbsp; Cable &nbsp;·&nbsp; Network &nbsp;·&nbsp; All Genres</p>
+    <p class="hero-desc">
+      Crafting narrative from image and sound — cutting drama, action, comedy, thriller, and everything in between. Shaping the story, regardless of genre.
+    </p>
+    <div class="hero-cta">
+      <a href="#reels" class="btn-primary">View Reels</a>
+      <a href="#contact" class="btn-ghost">Get in Touch</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- REELS -->
+<section id="reels">
+  <div class="section-label">Selected Work</div>
+  <h2 class="section-heading">Reels &amp; Clips</h2>
+  <p class="section-sub">Select a category. Click any clip to watch here or open on YouTube.</p>
+
+  <div class="reel-tabs">
+    <button class="reel-tab active" onclick="switchTab(event,'drama')">Drama</button>
+    <button class="reel-tab" onclick="switchTab(event,'action')">Action / Thriller</button>
+    <button class="reel-tab" onclick="switchTab(event,'comedy')">Comedy</button>
+    <button class="reel-tab" onclick="switchTab(event,'emotion')">Emotion</button>
+  </div>
+
+  <!-- Drama -->
+  <div class="reel-panel active" id="panel-drama">
+    <div class="reel-grid">
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Drama">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Drama</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Drama">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Drama</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Drama">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Drama</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action / Thriller -->
+  <div class="reel-panel" id="panel-action">
+    <div class="reel-grid">
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Action">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Action</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Thriller">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Thriller</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Action">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Action</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comedy -->
+  <div class="reel-panel" id="panel-comedy">
+    <div class="reel-grid">
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Comedy">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Comedy</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Comedy">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Comedy</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emotion -->
+  <div class="reel-panel" id="panel-emotion">
+    <div class="reel-grid">
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Emotion">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Emotion</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+      <div class="reel-item" data-yt="OJtn9wzfMqk" data-title="Clip Title — Emotion">
+        <div class="reel-placeholder"><div class="play-icon"></div></div>
+        <div class="reel-info">
+          <div class="reel-genre">Emotion</div>
+          <div class="reel-title">Clip Title</div>
+          <div class="reel-meta">Show &nbsp;·&nbsp; Network</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CREDITS -->
+<section id="credits">
+  <div class="section-label">Filmography</div>
+  <h2 class="section-heading">Editing Credits</h2>
+  <p class="section-sub">Full credits available on IMDb and in resume.</p>
+
+  <!-- CABLE — constrained to left column width -->
+  <div class="credits-cable">
+    <div class="credits-col-label">Cable</div>
+    <div class="credits-cable-grid">
+      <div>
+        <div class="credit-item">
+          <div>
+            <div class="credit-title">Guilt</div>
+            <div class="credit-role">Freeform / Lionsgate</div>
+          </div>
+          <div class="credit-meta">
+            <span class="credit-year">S1</span>
+            <span class="credit-eps">2 episodes</span>
+          </div>
+        </div>
+        <div class="credit-item">
+          <div>
+            <div class="credit-title">Legends</div>
+            <div class="credit-role">TNT / Fox21</div>
+          </div>
+          <div class="credit-meta">
+            <span class="credit-year">S2</span>
+            <span class="credit-eps">4 episodes</span>
+          </div>
+        </div>
+        <div class="credit-item">
+          <div>
+            <div class="credit-title">Perception</div>
+            <div class="credit-role">TNT / ABC</div>
+          </div>
+          <div class="credit-meta">
+            <span class="credit-year">S3</span>
+            <span class="credit-eps">9 episodes</span>
+          </div>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- NETWORK — 2 columns -->
+  <div class="credits-col-label">Network</div>
+  <div class="credits-network">
+    <div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">The Equalizer</div>
+          <div class="credit-role">CBS / Universal</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S3–5</span>
+          <span class="credit-eps">15 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">MacGyver</div>
+          <div class="credit-role">CBS / Lionsgate</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1–5</span>
+          <span class="credit-eps">31 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Notorious</div>
+          <div class="credit-role">ABC / Sony</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">3 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Nikita</div>
+          <div class="credit-role">CW / WB</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S3–4</span>
+          <span class="credit-eps">11 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Person of Interest</div>
+          <div class="credit-role">CBS / WB / Bad Robot</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">7 episodes</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Chase</div>
+          <div class="credit-role">NBC / WB / Bruckheimer</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">5 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">Cold Case</div>
+          <div class="credit-role">CBS / WB / Bruckheimer</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S5–7</span>
+          <span class="credit-eps">18 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">E-Ring</div>
+          <div class="credit-role">NBC / WB / Bruckheimer</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S1</span>
+          <span class="credit-eps">8 episodes</span>
+        </div>
+      </div>
+      <div class="credit-item">
+        <div>
+          <div class="credit-title">CSI: Miami</div>
+          <div class="credit-role">CBS / Bruckheimer</div>
+        </div>
+        <div class="credit-meta">
+          <span class="credit-year">S2</span>
+          <span class="credit-eps">6 episodes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div style="display:flex; gap:1.25rem; flex-wrap:wrap; justify-content:center; margin-bottom:3.5rem;">
+    <a href="https://www.imdb.com/name/nm0503647/" target="_blank" class="btn-primary">IMDb &nbsp;·&nbsp; Scott Lerner</a>
+    <a href="resume.pdf" class="btn-ghost" download>↓ &nbsp;Download Resume</a>
+  </div>
+  <div class="contact-tagline">Get in Touch.<br><em>Let's work!</em></div>
+  <p class="contact-sub">Los Angeles based — available to travel.</p>
+  <div class="contact-links">
+    <div class="contact-item">
+      <span class="contact-item-label">Agent / Ivana Slavic</span>
+      <a href="tel:3237821854" class="contact-link">323.782.1854</a>
+    </div>
+    <div class="contact-item">
+      <span class="contact-item-label">Email</span>
+      <a href="mailto:contact@gsktalent.com" class="contact-link">contact@gsktalent.com</a>
+    </div>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" id="lightboxClose">Close</button>
+    <iframe id="lightboxFrame" src="" allowfullscreen allow="autoplay"></iframe>
+  </div>
+  <div class="lightbox-title" id="lightboxTitle"></div>
+  <a class="lightbox-yt" id="lightboxYT" href="#" target="_blank">↗ Open on YouTube</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Scott Lerner &nbsp;·&nbsp; Picture Editor</p>
+  <p>Los Angeles, California</p>
+</footer>
+
+<script>
+  // Video autoplay
+  const heroVideo = document.getElementById('heroVideo');
+  if (heroVideo) { heroVideo.play().catch(() => {}); }
+
+  // LIGHTBOX
+  const lightbox     = document.getElementById('lightbox');
+  const lbFrame      = document.getElementById('lightboxFrame');
+  const lbTitle      = document.getElementById('lightboxTitle');
+  const lbYT         = document.getElementById('lightboxYT');
+  const lbClose      = document.getElementById('lightboxClose');
+
+  function openLightbox(ytId, title) {
+    lbFrame.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`;
+    lbTitle.textContent = title;
+    lbYT.href = `https://www.youtube.com/watch?v=${ytId}`;
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('active');
+    lbFrame.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.reel-item[data-yt]').forEach(card => {
+    card.addEventListener('click', () => {
+      openLightbox(card.dataset.yt, card.dataset.title);
+    });
+  });
+
+  lbClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  function switchTab(e, genre) {
+    document.querySelectorAll('.reel-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.reel-panel').forEach(p => p.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    document.getElementById('panel-' + genre).classList.add('active');
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('section:not(.hero), .credit-item, .skill-block').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
