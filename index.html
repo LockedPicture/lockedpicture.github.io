@@ -1585,7 +1585,9 @@
     const grid = document.getElementById('showClipsGrid');
     grid.innerHTML = show.clips.map(c => `
       <div class="show-clip-card" onclick="openLightbox('${c.yt}','${c.title} — ${show.name}')">
-        <img src="https://img.youtube.com/vi/${c.yt}/maxresdefault.jpg" alt="${c.title}">
+        <img src="https://img.youtube.com/vi/${c.yt}/maxresdefault.jpg"
+             onerror="this.src='https://img.youtube.com/vi/${c.yt}/hqdefault.jpg'"
+             alt="${c.title}">
         <div class="show-play-icon"></div>
         <div class="show-clip-info">
           <div class="show-clip-label">${c.label}</div>
@@ -1612,12 +1614,24 @@
   const heroVideo = document.getElementById('heroVideo');
   if (heroVideo) { heroVideo.play().catch(() => {}); }
 
-  // Load YouTube thumbnails into reel cards
+  // Load YouTube thumbnails with fallback
   document.querySelectorAll('.reel-item[data-yt]').forEach(card => {
     const id = card.dataset.yt;
     const ph = card.querySelector('.reel-placeholder');
     if (ph) {
-      ph.style.backgroundImage = `url(https://img.youtube.com/vi/${id}/maxresdefault.jpg)`;
+      const img = new Image();
+      img.onload = function() {
+        // maxresdefault returns a 120x90 grey image if unavailable
+        if (this.width <= 120) {
+          ph.style.backgroundImage = `url(https://img.youtube.com/vi/${id}/hqdefault.jpg)`;
+        } else {
+          ph.style.backgroundImage = `url(https://img.youtube.com/vi/${id}/maxresdefault.jpg)`;
+        }
+      };
+      img.onerror = function() {
+        ph.style.backgroundImage = `url(https://img.youtube.com/vi/${id}/hqdefault.jpg)`;
+      };
+      img.src = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
     }
     card.addEventListener('click', () => {
       openLightbox(card.dataset.yt, card.dataset.title);
